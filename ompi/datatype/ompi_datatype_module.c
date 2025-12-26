@@ -383,6 +383,11 @@ const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX_PREDEF
      * See https://github.com/mpi-forum/mpi-issues/issues/65 */
     [OMPI_DATATYPE_MPI_SHORT_FLOAT] = &ompi_mpi_short_float.dt,
     [OMPI_DATATYPE_MPI_C_SHORT_FLOAT_COMPLEX] = &ompi_mpi_c_short_float_complex.dt,
+#if OMPI_FORTRAN_REAL16_IS_FLOAT128
+    [OMPI_DATATYPE_MPI_FLOAT128] = &ompi_mpi_real16.dt,
+#else
+    [OMPI_DATATYPE_MPI_FLOAT128] = &ompi_mpi_unavailable.dt,
+#endif
 
     [OMPI_DATATYPE_MPI_UNAVAILABLE] = &ompi_mpi_unavailable.dt,
 };

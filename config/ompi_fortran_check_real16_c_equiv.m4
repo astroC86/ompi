@@ -24,8 +24,10 @@ dnl
 # OMPI_FORTRAN_CHECK_REAL16_C_EQUIV
 # ----------------------------------------------------
 AC_DEFUN([OMPI_FORTRAN_CHECK_REAL16_C_EQUIV],[
-    OPAL_VAR_SCOPE_PUSH([fortran_real16_happy define_value msg CFLAGS_save])
+    OPAL_VAR_SCOPE_PUSH([fortran_real16_happy define_value msg CFLAGS_save real16_is_float128])
     AS_VAR_PUSHDEF([real16_matches_c_var], [ompi_cv_real16_c_equiv])
+
+    real16_is_float128=0
 
     # We have to do this as a cache check for cross-compilation platforms
     AC_CACHE_CHECK([for C type matching bit representation of REAL*16],
@@ -43,25 +45,26 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_REAL16_C_EQUIV],[
                 # type that might work
                 AS_IF([test "$fortran_real16_happy" = "no"],
                       [AC_MSG_RESULT([$fortran_real16_happy])
+                       AS_IF([test "$fortran_real16_happy" = "no" && test "$ac_cv_type___float128" = "yes"],
+                             [AC_MSG_CHECKING([if __float128 == REAL*16])
+                              OMPI_FORTRAN_CHECK_REAL16_EQUIV_TYPE([__float128], [q])
+                              AS_IF([test "$fortran_real16_happy" = "yes"],
+                                    [OMPI_FORTRAN_REAL16_C_TYPE="__float128"
+                                     AC_MSG_RESULT([works!])],
+                                    [AC_MSG_RESULT([does not work])])
+                             ])
                        # Intel compiler has a special type that should work
-                       AS_IF([test "$opal_cv_c_compiler_vendor" = "intel"],
+                       AS_IF([test "$fortran_real16_happy" = "no" && test "$opal_cv_c_compiler_vendor" = "intel"],
                              [AC_MSG_CHECKING([if intel compiler _Quad == REAL*16])
                               CFLAGS_save="$CFLAGS"
                               OPAL_FLAGS_APPEND_UNIQ([CFLAGS], ["-Qoption,cpp,--extended_float_types"])
                               OMPI_FORTRAN_CHECK_REAL16_EQUIV_TYPE([_Quad], [q])
                               AS_IF([test "$fortran_real16_happy" = "yes"],
                                     [OMPI_FORTRAN_REAL16_C_TYPE="_Quad"
+                                     real16_is_float128=1
                                      AC_MSG_RESULT([works!])],
                                     [CFLAGS="$CFLAGS_save"
                                      AC_MSG_RESULT([does not work])])
-                             ])
-                       AS_IF([test "$opal_cv_c_compiler_vendor" = "gnu" && test "$ac_cv_type___float128" = "yes"],
-                             [AC_MSG_CHECKING([if gnu compiler __float128 == REAL*16])
-                              OMPI_FORTRAN_CHECK_REAL16_EQUIV_TYPE([__float128], [q])
-                              AS_IF([test "$fortran_real16_happy" = "yes"],
-                                    [OMPI_FORTRAN_REAL16_C_TYPE="__float128"
-                                     AC_MSG_RESULT([works!])],
-                                    [AC_MSG_RESULT([does not work])])
                              ])
                        # We have to [re-]print a new message here, because
                        # AC_CACHE_CHECK will automatically AC_MSG_RESULT
@@ -81,11 +84,17 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_REAL16_C_EQUIV],[
     AS_VAR_POPDEF([real16_matches_c_var])
 
     AS_IF([test "$ompi_real16_matches_c" = "yes"],
-          [define_value=1],
+          [define_value=1
+           AS_IF([test "$OMPI_FORTRAN_REAL16_C_TYPE" = "__float128" -o "$OMPI_FORTRAN_REAL16_C_TYPE" = "_Quad"],
+                 [real16_is_float128=1],
+                 [real16_is_float128=0])],
           [define_value=0
+           real16_is_float128=0
            AC_MSG_WARN([MPI_REAL16 and MPI_COMPLEX32 support have been disabled])])
     AC_DEFINE_UNQUOTED([OMPI_REAL16_MATCHES_C], [$define_value],
                        [Whether Fortran REAL*16 matches the bit format of the equivalent C type])
+    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_REAL16_IS_FLOAT128], [$real16_is_float128],
+                       [Whether Fortran REAL*16 uses an IEEE 128-bit C type (__float128 or _Quad)])
     OPAL_VAR_SCOPE_POP
 ])
 

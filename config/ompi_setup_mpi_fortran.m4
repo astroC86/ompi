@@ -189,7 +189,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                    [short float, float, double, long double, opal_short_float_t],
                    [8], [yes])
     OMPI_FORTRAN_CHECK([REAL*16], [no],
-                   [short float, float, double, long double, opal_short_float_t],
+                   [__float128, _Quad, long double, short float, float, double, opal_short_float_t],
                    [16], [yes])
 
     # In some compilers, the bit representation of REAL*16 is not the same

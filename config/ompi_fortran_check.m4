@@ -126,6 +126,8 @@ AC_DEFUN([OMPI_FORTRAN_CHECK], [
             int64_t)              ofc_type_kind=C_INT64_T             ;;
             int8_t)               ofc_type_kind=C_INT8_T              ;;
             long)                 ofc_type_kind=C_LONG                ;;
+            __float128)           ofc_type_kind=C_FLOAT128           ;;
+            _Quad)                ofc_type_kind=C_FLOAT128           ;;
             long*double)          ofc_type_kind=C_LONG_DOUBLE         ;;
             long*long)            ofc_type_kind=C_LONG_LONG           ;;
             short)                ofc_type_kind=C_SHORT               ;;

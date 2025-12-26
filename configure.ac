@@ -243,6 +243,10 @@ AH_TOP([/* -*- c -*-
 
 #include "opal_config_top.h"
 
+#ifdef HAVE_QUADMATH_H
+#include <quadmath.h>
+#endif
+
 ])
 AH_BOTTOM([
 #include "opal_config_bottom.h"
@@ -407,11 +411,25 @@ AC_CHECK_TYPES(uint128_t)
 AC_CHECK_TYPES(long long)
 
 AC_CHECK_TYPES(__float128)
+
+# Some compilers (e.g., Intel) require an extra flag to enable extended
+# floating point types such as _Quad.
+opal_extended_float_cflags=
+AS_IF([test "$opal_cv_c_compiler_vendor" = "intel"],
+      [opal_extended_float_cflags="-Qoption,cpp,--extended_float_types"])
+
+opal_save_CFLAGS=$CFLAGS
+AS_IF([test -n "$opal_extended_float_cflags"],
+      [OPAL_FLAGS_APPEND_UNIQ([CFLAGS], ["$opal_extended_float_cflags"])])
+AC_CHECK_TYPES(_Quad)
+CFLAGS=$opal_save_CFLAGS
+unset opal_save_CFLAGS
 AC_CHECK_TYPES(short float)
 AC_CHECK_TYPES(long double)
 # We only need these types if we're building the OMPI project, but
 # OPAL currently doesn't protect for their lack of presence well.
 AC_CHECK_HEADERS(complex.h)
+AC_CHECK_HEADERS([quadmath.h])
 AC_CHECK_TYPES(short float _Complex)
 AC_CHECK_TYPES(float _Complex)
 AC_CHECK_TYPES(double _Complex)
@@ -443,6 +461,14 @@ AC_CHECK_SIZEOF(double)
 AC_CHECK_SIZEOF(long double)
 if test "$ac_cv_type___float128" = yes; then
     AC_CHECK_SIZEOF(__float128)
+fi
+if test "$ac_cv_type__Quad" = yes; then
+    opal_save_CFLAGS=$CFLAGS
+    AS_IF([test -n "$opal_extended_float_cflags"],
+          [OPAL_FLAGS_APPEND_UNIQ([CFLAGS], ["$opal_extended_float_cflags"])])
+    AC_CHECK_SIZEOF(_Quad)
+    CFLAGS=$opal_save_CFLAGS
+    unset opal_save_CFLAGS
 fi
 # We only need these types if we're building the OMPI project, but
 # OPAL currently doesn't protect for their lack of presence well.
@@ -503,6 +529,14 @@ OPAL_C_GET_ALIGNMENT(double, OPAL_ALIGNMENT_DOUBLE)
 OPAL_C_GET_ALIGNMENT(long double, OPAL_ALIGNMENT_LONG_DOUBLE)
 if test "$ac_cv_type___float128" = yes; then
     OPAL_C_GET_ALIGNMENT(__float128, OPAL_ALIGNMENT___FLOAT128)
+fi
+if test "$ac_cv_type__Quad" = yes; then
+    opal_save_CFLAGS=$CFLAGS
+    AS_IF([test -n "$opal_extended_float_cflags"],
+          [OPAL_FLAGS_APPEND_UNIQ([CFLAGS], ["$opal_extended_float_cflags"])])
+    OPAL_C_GET_ALIGNMENT(_Quad, OPAL_ALIGNMENT__QUAD)
+    CFLAGS=$opal_save_CFLAGS
+    unset opal_save_CFLAGS
 fi
 
 
